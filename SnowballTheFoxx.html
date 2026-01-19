@@ -18,7 +18,7 @@
 <script>
 const feedUrl = "https://www.youtube.com/feeds/videos.xml?channel_id=UCdZb69sWoyrWsnbm4FVCHGA";
 
-fetch("https://thingproxy.freeboard.io/fetch/" + feedUrl)
+fetch("https://corsproxy.io/?" + encodeURIComponent(feedUrl))
   .then(r => r.text())
   .then(str => new DOMParser().parseFromString(str, "text/xml"))
   .then(data => {
@@ -36,6 +36,9 @@ fetch("https://thingproxy.freeboard.io/fetch/" + feedUrl)
         </div>`;
     }
     document.getElementById("videos").innerHTML = html;
+  })
+  .catch(() => {
+    document.getElementById("videos").innerHTML = "Error loading feed.";
   });
 </script>
 
