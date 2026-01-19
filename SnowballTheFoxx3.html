@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SnowballTheFoxx Videos</title>
+<style>
+  body { font-family: Arial; background:#111; color:#fff; margin:0; padding:10px; }
+  .video { margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid #333; }
+  img { width:100%; border-radius:8px; }
+  .title { font-size:18px; margin-top:10px; }
+  .pagination {
+    text-align:center;
+    margin:20px 0;
+  }
+  .pagination button {
+    background:#222;
+    color:#fff;
+    border:1px solid #444;
+    padding:10px 20px;
+    font-size:24px;
+    border-radius:6px;
+    margin:0 10px;
+    cursor:pointer;
+  }
+</style>
+</head>
+<body>
+
+<h2>SnowballTheFoxx — All Videos</h2>
+<div id="videos">Loading…</div>
+
+<div class="pagination">
+  <button id="prevBtn">←</button>
+  <button id="nextBtn">→</button>
+</div>
+
+<script>
+const feedUrl = "https://www.youtube.com/feeds/videos.xml?channel_id=UCdZb69sWoyrWsnbm4FVCHGA";
+let entries = [];
+let currentPage = 0;
+const pageSize = 20;
+
+function renderPage() {
+  const start = currentPage * pageSize;
+  const end = start + pageSize;
+  const pageEntries = entries.slice(start, end);
+
+  let html = "";
+  for (let entry of pageEntries) {
+    const title = entry.getElementsByTagName("title")[0].textContent;
+    const link = entry.getElementsByTagName("link")[0].getAttribute("href");
+    const videoId = link.split("v=")[1];
+    const thumb = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+
+    html += `
+      <div class="video" onclick="window.location.href='https://www.youtube.com/embed/${videoId}'">
+        <img src="${thumb}">
+        <div class="title">${title}</div>
+      </div>`;
+  }
+
+  document.getElementById("videos").innerHTML = html || "No videos found.";
+}
+
+document.getElementById("prevBtn").onclick = () => {
+  if (currentPage > 0) {
+    currentPage--;
+    renderPage();
+  }
+};
+
+document.getElementById("nextBtn").onclick = () => {
+  if ((currentPage + 1) * pageSize < entries.length) {
+    currentPage++;
+    renderPage();
+  }
+};
+
+fetch("https://corsproxy.io/?" + encodeURIComponent(feedUrl))
+  .then(r => r.text())
+  .then(str => new DOMParser().parseFromString(str, "text/xml"))
+  .then(data => {
+    entries = Array.from(data.getElementsByTagName("entry"));
+    renderPage();
+  })
+  .catch(() => {
+    document.getElementById("videos").innerHTML = "Error loading feed.";
+  });
+</script>
+
+</body>
+</html>
