@@ -11,6 +11,8 @@
   .pagination {
     text-align:center;
     margin:20px 0;
+    padding:10px 0;
+    background:#111;
   }
   .pagination button {
     background:#222;
@@ -21,6 +23,12 @@
     border-radius:6px;
     margin:0 10px;
     cursor:pointer;
+  }
+  #pageInfo {
+    text-align:center;
+    margin-top:5px;
+    font-size:14px;
+    color:#aaa;
   }
 </style>
 </head>
@@ -33,24 +41,33 @@
   <button id="prevBtn">←</button>
   <button id="nextBtn">→</button>
 </div>
+<div id="pageInfo"></div>
 
 <script>
-const feedUrl = "https://www.youtube.com/feeds/videos.xml?channel_id=UCdZb69sWoyrWsnbm4FVCHGA";
-let entries = [];
-let currentPage = 0;
-const pageSize = 20;
+// ====== CONFIG ======
+const API_KEY = "AIzaSyBgsvOG1uPNOGEU0QrRmDKfQctb5H7z7uk";
+const CHANNEL_ID = "UCdZb69sWoyrWsnbm4FVCHGA";
+const PAGE_SIZE = 20;
+// ====================
 
-function renderPage() {
-  const start = currentPage * pageSize;
-  const end = start + pageSize;
-  const pageEntries = entries.slice(start, end);
+let nextPageToken = null;
+let prevPageToken = null;
+let currentPageIndex = 1;
 
+const videosDiv = document.getElementById("videos");
+const prevBtn = document.getElementById("prevBtn");
+const nextBtn = document.getElementById("nextBtn");
+const pageInfo = document.getElementById("pageInfo");
+
+function renderVideos(items) {
   let html = "";
-  for (let entry of pageEntries) {
-    const title = entry.getElementsByTagName("title")[0].textContent;
-    const link = entry.getElementsByTagName("link")[0].getAttribute("href");
-    const videoId = link.split("v=")[1];
-    const thumb = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+  for (let item of items) {
+    const videoId = item.id.videoId;
+    if (!videoId) continue;
+    const title = item.snippet.title;
+    const thumb = item.snippet.thumbnails.high
+      ? item.snippet.thumbnails.high.url
+      : item.snippet.thumbnails.default.url;
 
     html += `
       <div class="video" onclick="window.location.href='https://www.youtube.com/embed/${videoId}'">
@@ -58,34 +75,53 @@ function renderPage() {
         <div class="title">${title}</div>
       </div>`;
   }
-
-  document.getElementById("videos").innerHTML = html || "No videos found.";
+  videosDiv.innerHTML = html || "No videos found.";
+  pageInfo.innerText = "Page " + currentPageIndex;
 }
 
-document.getElementById("prevBtn").onclick = () => {
-  if (currentPage > 0) {
-    currentPage--;
-    renderPage();
+function loadPage(pageToken) {
+  videosDiv.innerHTML = "Loading…";
+
+  let url = "https://www.googleapis.com/youtube/v3/search"
+          + "?key=" + encodeURIComponent(API_KEY)
+          + "&channelId=" + encodeURIComponent(CHANNEL_ID)
+          + "&part=snippet"
+          + "&order=date"
+          + "&maxResults=" + PAGE_SIZE
+          + "&type=video";
+
+  if (pageToken) {
+    url += "&pageToken=" + encodeURIComponent(pageToken);
   }
+
+  fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      nextPageToken = data.nextPageToken || null;
+      prevPageToken = data.prevPageToken || null;
+      renderVideos(data.items || []);
+      prevBtn.disabled = !prevPageToken;
+      nextBtn.disabled = !nextPageToken;
+    })
+    .catch(() => {
+      videosDiv.innerHTML = "Error loading videos.";
+    });
+}
+
+prevBtn.onclick = () => {
+  if (!prevPageToken) return;
+  currentPageIndex = Math.max(1, currentPageIndex - 1);
+  loadPage(prevPageToken);
 };
 
-document.getElementById("nextBtn").onclick = () => {
-  if ((currentPage + 1) * pageSize < entries.length) {
-    currentPage++;
-    renderPage();
-  }
+nextBtn.onclick = () => {
+  if (!nextPageToken) return;
+  currentPageIndex++;
+  loadPage(nextPageToken);
 };
 
-fetch("https://corsproxy.io/?" + encodeURIComponent(feedUrl))
-  .then(r => r.text())
-  .then(str => new DOMParser().parseFromString(str, "text/xml"))
-  .then(data => {
-    entries = Array.from(data.getElementsByTagName("entry"));
-    renderPage();
-  })
-  .catch(() => {
-    document.getElementById("videos").innerHTML = "Error loading feed.";
-  });
+// initial load
+loadPage(null);
 </script>
 
 </body>
