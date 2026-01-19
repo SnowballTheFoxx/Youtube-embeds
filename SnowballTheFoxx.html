@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SnowballTheFoxx Videos</title>
+<title>SnowballTheFoxx Videos (Debug)</title>
 <style>
   body { font-family: Arial; background:#111; color:#fff; margin:0; padding:10px; }
   .video { margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid #333; }
@@ -18,11 +18,13 @@
     padding:0 20px;
     cursor:pointer;
   }
+  #status { font-size:14px; color:#aaa; margin-bottom:10px; }
 </style>
 </head>
 <body>
 
-<h2>SnowballTheFoxx — All Videos</h2>
+<h2>SnowballTheFoxx — All Videos (Debug)</h2>
+<div id="status">Starting…</div>
 <div id="videos">Loading…</div>
 
 <div class="pagination">
@@ -36,7 +38,12 @@ let entries = [];
 let currentPage = 0;
 const pageSize = 20;
 
+function setStatus(msg) {
+  document.getElementById("status").innerText = msg;
+}
+
 function renderPage() {
+  setStatus(`Rendering page ${currentPage + 1}`);
   const start = currentPage * pageSize;
   const end = start + pageSize;
   const pageEntries = entries.slice(start, end);
@@ -55,7 +62,7 @@ function renderPage() {
       </div>`;
   }
 
-  document.getElementById("videos").innerHTML = html;
+  document.getElementById("videos").innerHTML = html || "No videos found.";
 }
 
 document.getElementById("prevBtn").onclick = () => {
@@ -72,14 +79,28 @@ document.getElementById("nextBtn").onclick = () => {
   }
 };
 
+setStatus("Fetching feed…");
+
 fetch("https://corsproxy.io/?" + encodeURIComponent(feedUrl))
-  .then(r => r.text())
-  .then(str => new DOMParser().parseFromString(str, "text/xml"))
+  .then(r => {
+    setStatus("Got response, reading text…");
+    return r.text();
+  })
+  .then(str => {
+    setStatus("Parsing XML…");
+    return new DOMParser().parseFromString(str, "text/xml");
+  })
   .then(data => {
     entries = Array.from(data.getElementsByTagName("entry"));
-    renderPage();
+    setStatus(`Parsed ${entries.length} entries.`);
+    if (entries.length === 0) {
+      document.getElementById("videos").innerHTML = "No entries in feed.";
+    } else {
+      renderPage();
+    }
   })
-  .catch(() => {
+  .catch(err => {
+    setStatus("Fetch error: " + err);
     document.getElementById("videos").innerHTML = "Error loading feed.";
   });
 </script>
