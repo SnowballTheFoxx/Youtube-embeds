@@ -8,10 +8,17 @@
   .video { margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid #333; }
   img { width:100%; border-radius:8px; }
   .title { font-size:18px; margin-top:10px; }
+
+  /* FIX: Make pagination always clickable */
   .pagination {
     text-align:center;
-    margin:20px 0;
+    margin:30px 0;
+    padding:20px 0;
+    background:#111;
+    position:relative;
+    z-index:9999;
   }
+
   .pagination button {
     background:#222;
     color:#fff;
@@ -63,10 +70,8 @@ function renderPage() {
 }
 
 document.getElementById("prevBtn").onclick = () => {
-  if (currentPage > 0) {
-    currentPage--;
-    renderPage();
-  }
+  currentPage = Math.max(0, currentPage - 1);
+  renderPage();
 };
 
 document.getElementById("nextBtn").onclick = () => {
