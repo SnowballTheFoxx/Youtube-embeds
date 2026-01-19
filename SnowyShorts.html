@@ -1,9 +1,66 @@
 <!DOCTYPE html>
 <html>
-  <body style="margin:0;padding:0;overflow:hidden;">
-    <iframe width="100%" height="100%" 
-      src="https://www.youtube.com/embed?list=UUwMssK5GJnCjG0LAXO1-ayg" 
-      frameborder="0" allowfullscreen>
-    </iframe>
-  </body>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FoxxShorts Videos</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #111;
+    color: #fff;
+    margin: 0;
+    padding: 10px;
+  }
+  .video {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #333;
+  }
+  img {
+    width: 100%;
+    border-radius: 8px;
+  }
+  .title {
+    font-size: 18px;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<h2>FoxxShorts — All Videos</h2>
+
+<div id="videos">Loading…</div>
+
+<script>
+const feedUrl = "https://www.youtube.com/feeds/videos.xml?channel_id=UCdZb69sWoyrWsnbm4FVCHGA";
+
+fetch(feedUrl)
+  .then(response => response.text())
+  .then(str => (new window.DOMParser()).parseFromString(str, "text/xml"))
+  .then(data => {
+    const entries = data.getElementsByTagName("entry");
+    let html = "";
+
+    for (let i = 0; i < entries.length; i++) {
+      const entry = entries[i];
+
+      const title = entry.getElementsByTagName("title")[0].textContent;
+      const link = entry.getElementsByTagName("link")[0].getAttribute("href");
+      const videoId = link.split("v=")[1];
+      const thumbnail = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+
+      html += `
+        <div class="video" onclick="window.location.href='https://www.youtube.com/embed/${videoId}'">
+          <img src="${thumbnail}">
+          <div class="title">${title}</div>
+        </div>
+      `;
+    }
+
+    document.getElementById("videos").innerHTML = html;
+  });
+</script>
+
+</body>
 </html>
