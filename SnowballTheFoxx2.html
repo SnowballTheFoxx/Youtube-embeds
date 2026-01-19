@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SnowballTheFoxx Videos (Debug)</title>
+<title>SnowballTheFoxx Videos</title>
 <style>
   body { font-family: Arial; background:#111; color:#fff; margin:0; padding:10px; }
   .video { margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid #333; }
@@ -11,25 +11,27 @@
   .pagination {
     text-align:center;
     margin:20px 0;
-    font-size:30px;
-    user-select:none;
   }
-  .pagination span {
-    padding:0 20px;
+  .pagination button {
+    background:#222;
+    color:#fff;
+    border:1px solid #444;
+    padding:10px 20px;
+    font-size:24px;
+    border-radius:6px;
+    margin:0 10px;
     cursor:pointer;
   }
-  #status { font-size:14px; color:#aaa; margin-bottom:10px; }
 </style>
 </head>
 <body>
 
-<h2>SnowballTheFoxx — All Videos (Debug)</h2>
-<div id="status">Starting…</div>
+<h2>SnowballTheFoxx — All Videos</h2>
 <div id="videos">Loading…</div>
 
 <div class="pagination">
-  <span id="prevBtn">←</span>
-  <span id="nextBtn">→</span>
+  <button id="prevBtn">←</button>
+  <button id="nextBtn">→</button>
 </div>
 
 <script>
@@ -38,12 +40,7 @@ let entries = [];
 let currentPage = 0;
 const pageSize = 20;
 
-function setStatus(msg) {
-  document.getElementById("status").innerText = msg;
-}
-
 function renderPage() {
-  setStatus(`Rendering page ${currentPage + 1}`);
   const start = currentPage * pageSize;
   const end = start + pageSize;
   const pageEntries = entries.slice(start, end);
@@ -79,28 +76,14 @@ document.getElementById("nextBtn").onclick = () => {
   }
 };
 
-setStatus("Fetching feed…");
-
 fetch("https://corsproxy.io/?" + encodeURIComponent(feedUrl))
-  .then(r => {
-    setStatus("Got response, reading text…");
-    return r.text();
-  })
-  .then(str => {
-    setStatus("Parsing XML…");
-    return new DOMParser().parseFromString(str, "text/xml");
-  })
+  .then(r => r.text())
+  .then(str => new DOMParser().parseFromString(str, "text/xml"))
   .then(data => {
     entries = Array.from(data.getElementsByTagName("entry"));
-    setStatus(`Parsed ${entries.length} entries.`);
-    if (entries.length === 0) {
-      document.getElementById("videos").innerHTML = "No entries in feed.";
-    } else {
-      renderPage();
-    }
+    renderPage();
   })
-  .catch(err => {
-    setStatus("Fetch error: " + err);
+  .catch(() => {
     document.getElementById("videos").innerHTML = "Error loading feed.";
   });
 </script>
