@@ -8,6 +8,16 @@
   .video { margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid #333; }
   img { width:100%; border-radius:8px; }
   .title { font-size:18px; margin-top:10px; }
+  .pagination {
+    text-align:center;
+    margin:20px 0;
+    font-size:30px;
+    user-select:none;
+  }
+  .pagination span {
+    padding:0 20px;
+    cursor:pointer;
+  }
 </style>
 </head>
 <body>
@@ -15,27 +25,59 @@
 <h2>SnowballTheFoxx — All Videos</h2>
 <div id="videos">Loading…</div>
 
+<div class="pagination">
+  <span id="prevBtn">←</span>
+  <span id="nextBtn">→</span>
+</div>
+
 <script>
 const feedUrl = "https://www.youtube.com/feeds/videos.xml?channel_id=UCdZb69sWoyrWsnbm4FVCHGA";
+let entries = [];
+let currentPage = 0;
+const pageSize = 20;
+
+function renderPage() {
+  const start = currentPage * pageSize;
+  const end = start + pageSize;
+  const pageEntries = entries.slice(start, end);
+
+  let html = "";
+  for (let entry of pageEntries) {
+    const title = entry.getElementsByTagName("title")[0].textContent;
+    const link = entry.getElementsByTagName("link")[0].getAttribute("href");
+    const videoId = link.split("v=")[1];
+    const thumb = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+
+    html += `
+      <div class="video" onclick="window.location.href='https://www.youtube.com/embed/${videoId}'">
+        <img src="${thumb}">
+        <div class="title">${title}</div>
+      </div>`;
+  }
+
+  document.getElementById("videos").innerHTML = html;
+}
+
+document.getElementById("prevBtn").onclick = () => {
+  if (currentPage > 0) {
+    currentPage--;
+    renderPage();
+  }
+};
+
+document.getElementById("nextBtn").onclick = () => {
+  if ((currentPage + 1) * pageSize < entries.length) {
+    currentPage++;
+    renderPage();
+  }
+};
 
 fetch("https://corsproxy.io/?" + encodeURIComponent(feedUrl))
   .then(r => r.text())
   .then(str => new DOMParser().parseFromString(str, "text/xml"))
   .then(data => {
-    const entries = data.getElementsByTagName("entry");
-    let html = "";
-    for (let entry of entries) {
-      const title = entry.getElementsByTagName("title")[0].textContent;
-      const link = entry.getElementsByTagName("link")[0].getAttribute("href");
-      const videoId = link.split("v=")[1];
-      const thumb = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-      html += `
-        <div class="video" onclick="window.location.href='https://www.youtube.com/embed/${videoId}'">
-          <img src="${thumb}">
-          <div class="title">${title}</div>
-        </div>`;
-    }
-    document.getElementById("videos").innerHTML = html;
+    entries = Array.from(data.getElementsByTagName("entry"));
+    renderPage();
   })
   .catch(() => {
     document.getElementById("videos").innerHTML = "Error loading feed.";
