@@ -16,9 +16,9 @@
 <div id="videos">Loading…</div>
 
 <script>
-const feedUrl = "https://www.youtube.com/feeds/videos.xml?channel_id=UCdZb69sWoyrWsnbm4FVCHGA";
+const feedUrl = "https://www.youtube.com/feeds/videos.xml?channel_id=UCwMssK5GJnCjG0LAXO1-ayg";
 
-fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(feedUrl))
+fetch("https://thingproxy.freeboard.io/fetch/" + feedUrl)
   .then(r => r.text())
   .then(str => new DOMParser().parseFromString(str, "text/xml"))
   .then(data => {
